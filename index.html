@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Schoolwork Launchpad — Tactile Desk Organizer</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Expressive Stationery Fonts: Bricolage Grotesque, Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            display: ['Bricolage Grotesque', 'Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            paper: '#FFFDF7',
+            cream: '#FAF6EB',
+            ink: '#1C1917',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Warm Dot-Grid Notebook Paper Background */
+    body {
+      background-color: #FFFDF7;
+      background-image: radial-gradient(#D6D3D1 1.25px, transparent 1.25px);
+      background-size: 20px 20px;
+      color: #1C1917;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Tactile Stationery Card & Button Utilities */
+    .stationery-card {
+      background-color: #FFFFFF;
+      border: 2px solid #1C1917;
+      box-shadow: 4px 4px 0px #1C1917;
+    }
+
+    .stationery-card-sm {
+      background-color: #FFFFFF;
+      border: 2px solid #1C1917;
+      box-shadow: 2.5px 2.5px 0px #1C1917;
+    }
+
+    .tactile-btn {
+      border: 2px solid #1C1917;
+      box-shadow: 3px 3px 0px #1C1917;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+    }
+    .tactile-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px #1C1917;
+    }
+    .tactile-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #1C1917;
+    }
+
+    /* Decorative Semi-Transparent Washi Tape Strip */
+    .washi-tape {
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-1.5deg);
+      width: 96px;
+      height: 20px;
+      opacity: 0.88;
+      border-left: 2px dashed rgba(28, 25, 23, 0.25);
+      border-right: 2px dashed rgba(28, 25, 23, 0.25);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Highlighter Marker Effect */
+    .marker-yellow {
+      background: linear-gradient(104deg, rgba(254, 240, 138, 0) 0.9%, rgba(254, 240, 138, 1) 2.4%, rgba(254, 240, 138, 0.85) 98%, rgba(254, 240, 138, 0) 99.5%);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+
+    /* Checkmark Stamp Pop */
+    @keyframes stampPop {
+      0% { transform: scale(0.75) rotate(-8deg); }
+      55% { transform: scale(1.18) rotate(3deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .animate-stamp {
+      animation: stampPop 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Tunnel Vision (Focus Mode) */
+    body.tunnel-vision .dim-in-tunnel {
+      opacity: 0.18;
+      pointer-events: none;
+      filter: grayscale(60%) blur(1px);
+      transition: all 0.3s ease;
+    }
+    .dim-in-tunnel {
+      transition: all 0.3s ease;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #FFFDF7; }
+    ::-webkit-scrollbar-thumb { background: #A8A29E; border-radius: 999px; border: 2px solid #FFFDF7; }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .stationery-card { box-shadow: none !important; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-200 selection:text-ink">
+
+  <!-- Toast Stack -->
+  <div id="toast-container" class="fixed bottom-20 md:bottom-6 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Top Desk Header -->
+  <header class="sticky top-0 z-30 bg-[#FFFDF7]/95 backdrop-blur-xs border-b-2 border-ink no-print">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <!-- Brand Stamp -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-300 border-2 border-ink shadow-[2px_2px_0px_#1C1917] flex items-center justify-center font-display font-extrabold text-lg -rotate-2">
+          ✎
+        </div>
+        <div>
+          <h1 class="font-display font-extrabold text-lg sm:text-xl text-ink tracking-tight leading-none">
+            Schoolwork Launchpad
+          </h1>
+          <p class="text-xs font-medium text-stone-600 hidden sm:block mt-0.5">
+            Pick 3 things. Shrink step one. Start for 10 mins.
+          </p>
+        </div>
+      </div>
+
+      <!-- Colorful Folder-Tab Navigation (Desktop) -->
+      <nav class="hidden md:flex items-center gap-2" aria-label="Desk Tabs">
+        <button onclick="switchTab('today')" data-tab="today"
+          class="nav-tab px-4 py-1.5 rounded-xl text-sm font-display font-bold border-2 border-ink transition-all flex items-center gap-1.5">
+          <span>Today's Desk</span>
+        </button>
+        <button onclick="switchTab('inbox')" data-tab="inbox"
+          class="nav-tab px-4 py-1.5 rounded-xl text-sm font-display font-bold border-2 border-ink transition-all flex items-center gap-2">
+          <span>Inbox</span>
+          <span id="inbox-badge" class="font-mono text-xs px-1.5 py-0.2 rounded-md bg-ink text-white">0</span>
+        </button>
+        <button onclick="switchTab('week')" data-tab="week"
+          class="nav-tab px-4 py-1.5 rounded-xl text-sm font-display font-bold border-2 border-ink transition-all flex items-center gap-1.5">
+          <span>This Week</span>
+        </button>
+        <button onclick="switchTab('guide')" data-tab="guide"
+          class="nav-tab px-4 py-1.5 rounded-xl text-sm font-display font-bold border-2 border-ink transition-all flex items-center gap-1.5">
+          <span>My Classes & Guide</span>
+        </button>
+      </nav>
+
+      <!-- Tunnel Vision & Print Controls -->
+      <div class="flex items-center gap-2">
+        <button onclick="toggleTunnelVision()" id="tunnel-btn"
+          class="tactile-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-display font-bold bg-white text-ink flex items-center gap-1.5">
+          <span id="tunnel-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-ink"></span>
+          <span id="tunnel-label">Tunnel Vision</span>
+        </button>
+        <button onclick="window.print()" title="Print Desk Sheet"
+          class="tactile-btn p-2 rounded-xl bg-amber-100 text-ink hidden sm:flex items-center justify-center" aria-label="Print">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-6 pb-28 md:pb-14">
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: TODAY'S DESK                                                   -->
+    <!-- ===================================================================== -->
+    <section id="view-today" class="space-y-7">
+
+      <!-- Top Row: Vibe/Energy Battery & After-School Landing Strip -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 dim-in-tunnel">
+
+        <!-- Vibe & Energy Check Card -->
+        <div class="lg:col-span-7 stationery-card rounded-2xl p-5 relative bg-[#FFFDF9]">
+          <div class="washi-tape bg-sky-300"></div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <span id="today-date-label" class="font-mono text-xs font-bold uppercase tracking-wider text-stone-500">TODAY</span>
+              <h2 class="font-display font-extrabold text-xl text-ink">How’s your brain battery right now?</h2>
+            </div>
+            <!-- Hard Stop Tag -->
+            <div class="flex items-center gap-2 bg-rose-100 px-3 py-1.5 rounded-xl border-2 border-ink">
+              <span class="text-xs font-extrabold uppercase tracking-wide text-rose-900">Hard Stop:</span>
+              <input id="hard-stop-input" type="time" onchange="updateHardStop(this.value)"
+                class="font-mono text-xs font-bold bg-transparent text-ink focus:outline-none cursor-pointer" />
+            </div>
+          </div>
+
+          <!-- 5 Colorful Battery Buttons -->
+          <div class="grid grid-cols-5 gap-2" id="energy-buttons"></div>
+
+          <!-- Grounded Advice Callout -->
+          <div id="energy-advice-box" class="mt-3.5 rounded-xl p-3 border-2 border-ink bg-amber-100 text-ink text-xs sm:text-sm font-semibold leading-snug">
+            Pick a battery level above for a realistic game plan.
+          </div>
+        </div>
+
+        <!-- After-School Landing Strip (Sticky-Note Style) -->
+        <div class="lg:col-span-5 stationery-card rounded-2xl p-5 bg-[#FEF9C3] relative flex flex-col justify-between">
+          <div class="washi-tape bg-pink-300" style="transform: translateX(-50%) rotate(1.8deg);"></div>
+          <div>
+            <button onclick="toggleLandingCollapse()" class="w-full flex items-center justify-between text-left">
+              <div>
+                <h3 class="font-display font-extrabold text-lg text-ink">After-School Landing Strip</h3>
+                <p class="text-xs font-medium text-stone-700">Decompress before opening Canvas</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="landing-progress-pill" class="font-mono text-xs font-bold px-2.5 py-0.5 rounded-lg bg-white border-2 border-ink">0/4</span>
+                <span id="landing-chevron" class="font-mono text-sm font-bold transition-transform">▼</span>
+              </div>
+            </button>
+
+            <div id="landing-checklist-body" class="mt-3 space-y-1.5"></div>
+          </div>
+
+          <!-- Instant Quick Brain Dump right on Today's Desk -->
+          <form onsubmit="handleQuickBrainDump(event)" class="mt-4 pt-3 border-t-2 border-dashed border-ink/25 flex items-center gap-2">
+            <input id="quick-dump-input" type="text" placeholder="Brain dump a task straight to Inbox..."
+              class="flex-1 bg-white text-xs sm:text-sm font-medium px-3 py-2 rounded-xl border-2 border-ink focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            <button type="submit" class="tactile-btn px-3.5 py-2 rounded-xl bg-ink text-white font-display font-bold text-xs shrink-0">
+              + Dump
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Main Desk Area: Left = My Top Three Cards, Right = 10-Min Analog Start Timer -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left Column: My Top Three Cards (7 cols) -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 dim-in-tunnel">
+            <div>
+              <h2 class="font-display font-extrabold text-2xl text-ink">
+                My <span class="marker-yellow">Top Three</span> Today
+              </h2>
+              <p class="text-xs font-medium text-stone-600">Only 3 slots allowed. Everything else lives safely in your Inbox.</p>
+            </div>
+            <button onclick="switchTab('inbox')" class="tactile-btn px-3.5 py-1.5 rounded-xl bg-white text-xs font-display font-bold text-ink">
+              Browse Inbox →
+            </button>
+          </div>
+
+          <!-- Top 3 Cards Container -->
+          <div id="top-three-container" class="space-y-5"></div>
+
+          <!-- End-of-Day Reset Strip -->
+          <div class="stationery-card rounded-2xl p-4 sm:p-5 bg-emerald-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 dim-in-tunnel no-print">
+            <div>
+              <h3 class="font-display font-extrabold text-base text-ink">Done for tonight?</h3>
+              <p class="text-xs font-medium text-stone-800 mt-0.5">
+                Roll unfinished tasks back to your Inbox, check off packing your bag, and close the desk.
+              </p>
+            </div>
+            <button onclick="openEndOfDayModal()" class="tactile-btn w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white text-ink font-display font-bold text-xs shrink-0">
+              End-of-Day Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Column: Tactile 10-Minute Start Timer (5 cols) -->
+        <div class="lg:col-span-5 lg:sticky lg:top-20">
+          <div id="timer-card" class="stationery-card rounded-2xl p-5 sm:p-6 bg-[#FFFDF9] relative space-y-4">
+            <div class="washi-tape bg-amber-300"></div>
+
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="inline-block font-mono text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-orange-200 border border-ink text-ink">
+                  10-MINUTE START RULE
+                </span>
+                <h3 class="font-display font-extrabold text-xl text-ink mt-1">Just Start the Clock</h3>
+              </div>
+              <button onclick="toggleTimerSound()" id="sound-toggle-btn" title="Toggle end chime"
+                class="tactile-btn px-2.5 py-1.5 rounded-xl bg-white font-mono text-xs font-bold">
+                CHIME: ON
+              </button>
+            </div>
+
+            <!-- Active Task Selector -->
+            <div class="bg-cream rounded-xl p-3 border-2 border-ink space-y-1.5">
+              <label for="timer-active-slot" class="block font-mono text-[11px] font-bold uppercase text-stone-600">
+                ACTIVE CARD:
+              </label>
+              <select id="timer-active-slot" onchange="setActiveTimerSlot()"
+                class="w-full bg-white text-xs sm:text-sm font-bold text-ink px-3 py-2 rounded-lg border-2 border-ink focus:outline-none">
+                <option value="must">1 — MUST DO</option>
+                <option value="should">2 — SHOULD DO</option>
+                <option value="quick">3 — QUICK WIN</option>
+              </select>
+              <p id="timer-tiny-step-preview" class="text-xs font-semibold text-stone-700 pt-1">
+                First tiny step: Open your notebook.
+              </p>
+            </div>
+
+            <!-- Bold Analog-Style Dial -->
+            <div class="relative flex items-center justify-center py-2">
+              <svg class="w-52 h-52 -rotate-90 transform" viewBox="0 0 200 200">
+                <!-- Outer Ink Border Circle -->
+                <circle cx="100" cy="100" r="92" stroke="#1C1917" stroke-width="3" fill="#FFFDF7" />
+                <!-- Track -->
+                <circle cx="100" cy="100" r="80" stroke="#E7E5E4" stroke-width="14" fill="none" />
+                <!-- Active Color Arc -->
+                <circle id="timer-ring" cx="100" cy="100" r="80" stroke="#F97316" stroke-width="14" stroke-linecap="butt"
+                  fill="none" stroke-dasharray="502.65" stroke-dashoffset="0" class="transition-all duration-500 ease-linear" />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+                <span id="timer-mode-badge" class="font-mono text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-amber-200 border border-ink text-ink mb-1">
+                  10M START
+                </span>
+                <div id="timer-display" class="font-mono font-extrabold text-4xl text-ink tracking-tight">
+                  10:00
+                </div>
+                <span id="timer-status-text" class="text-[11px] font-semibold text-stone-600 mt-1 leading-tight">
+                  Stop guilt-free when it rings.
+                </span>
+              </div>
+            </div>
+
+            <!-- Presets + Custom Minutes -->
+            <div class="grid grid-cols-5 gap-1.5">
+              <button onclick="setTimerPreset(10, '10M START')" data-preset="10"
+                class="preset-btn py-2 rounded-xl font-mono text-xs font-extrabold border-2 border-ink bg-orange-400 text-ink">
+                10m
+              </button>
+              <button onclick="setTimerPreset(15, '15M BLOCK')" data-preset="15"
+                class="preset-btn py-2 rounded-xl font-mono text-xs font-extrabold border-2 border-ink bg-white text-ink hover:bg-amber-50">
+                15m
+              </button>
+              <button onclick="setTimerPreset(25, '25M FOCUS')" data-preset="25"
+                class="preset-btn py-2 rounded-xl font-mono text-xs font-extrabold border-2 border-ink bg-white text-ink hover:bg-amber-50">
+                25m
+              </button>
+              <button onclick="setTimerPreset(5, '5M BREAK')" data-preset="5"
+                class="preset-btn py-2 rounded-xl font-mono text-xs font-extrabold border-2 border-ink bg-sky-200 text-ink hover:bg-sky-300">
+                5m
+              </button>
+              <div class="flex items-center border-2 border-ink rounded-xl bg-white overflow-hidden" title="Custom minutes">
+                <input id="custom-min-input" type="number" min="1" max="90" placeholder="Custom"
+                  onchange="applyCustomMinutes(this.value)"
+                  class="w-full text-center font-mono text-[11px] font-bold text-ink focus:outline-none py-1.5 px-1" />
+              </div>
+            </div>
+
+            <!-- Start / Pause / Reset -->
+            <div class="flex items-center gap-2.5">
+              <button onclick="toggleTimer()" id="timer-start-btn"
+                class="tactile-btn flex-1 py-3 px-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-ink font-display font-extrabold text-base flex items-center justify-center gap-2">
+                <span id="timer-start-label">Start 10m Timer</span>
+              </button>
+              <button onclick="resetTimer()"
+                class="tactile-btn py-3 px-4 rounded-xl bg-white hover:bg-stone-100 text-ink font-display font-bold text-sm">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: ASSIGNMENT INBOX                                               -->
+    <!-- ===================================================================== -->
+    <section id="view-inbox" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-ink">Assignment Inbox</h2>
+          <p class="text-sm font-medium text-stone-600">
+            Dump homework here fast, tap your class sticker, and promote only 3 to Today.
+          </p>
+        </div>
+        <button onclick="clearSampleInbox()" class="tactile-btn px-3.5 py-2 rounded-xl bg-white text-xs font-display font-bold text-ink self-start">
+          Clear Sample Tasks
+        </button>
+      </div>
+
+      <!-- Zero-Friction Capture Bar -->
+      <form onsubmit="addInboxTask(event)" class="stationery-card rounded-2xl p-4 sm:p-5 bg-[#FFFDF9] space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="font-mono text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-200 border border-ink">
+            QUICK CAPTURE — PICK A CLASS STICKER & HIT ENTER
+          </span>
+        </div>
+
+        <!-- Class Sticker Selector Chips -->
+        <div class="flex flex-wrap items-center gap-2" id="capture-class-chips">
+          <!-- Populated by JS with the 5 exact classes -->
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div class="sm:col-span-6">
+            <label class="sr-only" for="inbox-title">Assignment name</label>
+            <input id="inbox-title" type="text" required placeholder="What’s the assignment? (e.g., Lab 4 post-lab questions)"
+              class="w-full bg-white text-sm font-semibold px-4 py-3 rounded-xl border-2 border-ink focus:outline-none focus:ring-2 focus:ring-amber-400" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="sr-only" for="inbox-priority">Priority</label>
+            <select id="inbox-priority"
+              class="w-full bg-white text-xs sm:text-sm font-bold px-3 py-3 rounded-xl border-2 border-ink focus:outline-none">
+              <option value="Must">Must Do</option>
+              <option value="Should" selected>Should Do</option>
+              <option value="Quick Win">Quick Win</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="sr-only" for="inbox-due">Due date</label>
+            <input id="inbox-due" type="date"
+              class="w-full bg-white font-mono text-xs font-bold px-3 py-3 rounded-xl border-2 border-ink focus:outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <button type="submit"
+              class="tactile-btn w-full h-full py-3 px-4 rounded-xl bg-amber-300 hover:bg-amber-400 text-ink font-display font-extrabold text-sm">
+              + Add Task
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Color-Coded Filter Pills -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2" id="inbox-filters">
+          <!-- Populated by JS -->
+        </div>
+        <span id="inbox-count-label" class="font-mono text-xs font-bold text-stone-600">0 tasks</span>
+      </div>
+
+      <!-- Inbox List -->
+      <div id="inbox-list" class="space-y-3"></div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: THIS WEEK                                                      -->
+    <!-- ===================================================================== -->
+    <section id="view-week" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-ink">This Week — Big Picture</h2>
+          <p class="text-sm font-medium text-stone-600">
+            Spot busy afternoon commitments early and pick your top 1–2 anchor tasks per day.
+          </p>
+        </div>
+        <button onclick="resetWeeklyPlan()" class="tactile-btn px-3.5 py-2 rounded-xl bg-white text-xs font-display font-bold text-ink self-start">
+          Clear Week Spread
+        </button>
+      </div>
+
+      <!-- 7-Day Spread + Weekly Reset Sticky Note -->
+      <div id="week-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"></div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: MY CLASSES & GUIDE                                             -->
+    <!-- ===================================================================== -->
+    <section id="view-guide" class="hidden space-y-8">
+
+      <!-- The 5 Ground Rules (Non-Preachy, Human Tone) -->
+      <div class="stationery-card rounded-2xl p-6 sm:p-7 bg-[#FEF9C3] relative space-y-5">
+        <div class="washi-tape bg-orange-300"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <span class="font-mono text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-white border border-ink">
+              HOW THIS DESK WORKS
+            </span>
+            <h2 class="font-display font-extrabold text-2xl text-ink mt-1.5">The 5 Ground Rules</h2>
+          </div>
+          <div class="px-3.5 py-2 rounded-xl bg-white border-2 border-ink text-xs font-bold text-ink shadow-[2px_2px_0px_#1C1917]">
+            Skipping a day isn't failure—just pick up the next tiny step.
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          <div class="stationery-card-sm rounded-xl p-4 bg-white">
+            <span class="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-rose-200 border border-ink">RULE 01</span>
+            <h3 class="font-display font-extrabold text-base text-ink mt-2">Cap Today at 3</h3>
+            <p class="text-xs font-medium text-stone-700 mt-1 leading-relaxed">
+              1 Must-Do, 1 Should-Do, 1 Quick Win. A 14-item to-do list just makes your brain hit the brakes.
+            </p>
+          </div>
+          <div class="stationery-card-sm rounded-xl p-4 bg-white">
+            <span class="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-sky-200 border border-ink">RULE 02</span>
+            <h3 class="font-display font-extrabold text-base text-ink mt-2">Shrink Step One</h3>
+            <p class="text-xs font-medium text-stone-700 mt-1 leading-relaxed">
+              Make the first step embarrassingly small—like "Open the doc and type my name."
+            </p>
+          </div>
+          <div class="stationery-card-sm rounded-xl p-4 bg-white">
+            <span class="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-amber-200 border border-ink">RULE 03</span>
+            <h3 class="font-display font-extrabold text-base text-ink mt-2">10-Minute Deal</h3>
+            <p class="text-xs font-medium text-stone-700 mt-1 leading-relaxed">
+              You only owe the assignment 10 minutes. When the chime rings, you have full permission to stop.
+            </p>
+          </div>
+          <div class="stationery-card-sm rounded-xl p-4 bg-white">
+            <span class="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-purple-200 border border-ink">RULE 04</span>
+            <h3 class="font-display font-extrabold text-base text-ink mt-2">Pre-Pick Your Exit</h3>
+            <p class="text-xs font-medium text-stone-700 mt-1 leading-relaxed">
+              Decide before you start what you'll do if you hit a wall (text a friend, do 1 example, or email teacher).
+            </p>
+          </div>
+          <div class="stationery-card-sm rounded-xl p-4 bg-white">
+            <span class="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-emerald-200 border border-ink">RULE 05</span>
+            <h3 class="font-display font-extrabold text-base text-ink mt-2">Respect Hard Stops</h3>
+            <p class="text-xs font-medium text-stone-700 mt-1 leading-relaxed">
+              Sleep protects tomorrow's focus. When your hard stop time hits, pack up guilt-free.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Column Split: My 5 Classes Directory + What Helps Me Focus Log -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- My 5 Classes Directory (7 cols) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-display font-extrabold text-xl text-ink">My 5 Classes</h3>
+              <p class="text-xs font-medium text-stone-600">Click any field to edit room numbers, HW patterns, or help resources.</p>
+            </div>
+            <button onclick="addNewClassCard()" class="tactile-btn px-3.5 py-2 rounded-xl bg-amber-300 text-xs font-display font-bold text-ink">
+              + Add Class
+            </button>
+          </div>
+
+          <div id="classes-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- What Helps Me Focus Log (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div>
+            <h3 class="font-display font-extrabold text-xl text-ink">What Helps Me Focus Log</h3>
+            <p class="text-xs font-medium text-stone-600">Keep track of tricks that actually help you get past starting friction.</p>
+          </div>
+
+          <form onsubmit="addFocusLogEntry(event)" class="stationery-card rounded-2xl p-4 bg-white space-y-3">
+            <div class="text-xs font-extrabold text-ink">What worked today?</div>
+            <div class="flex flex-wrap gap-1.5" id="log-tag-pills">
+              <button type="button" onclick="selectLogTag(this, '10-min timer')" class="log-tag-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-200 border-2 border-ink text-ink">10-min timer</button>
+              <button type="button" onclick="selectLogTag(this, 'Body doubling')" class="log-tag-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white border-2 border-ink text-ink">Body doubling</button>
+              <button type="button" onclick="selectLogTag(this, 'Lo-fi / brown noise')" class="log-tag-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white border-2 border-ink text-ink">Lo-fi / brown noise</button>
+              <button type="button" onclick="selectLogTag(this, 'Kitchen table')" class="log-tag-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white border-2 border-ink text-ink">Kitchen table</button>
+              <button type="button" onclick="selectLogTag(this, 'Phone in other room')" class="log-tag-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white border-2 border-ink text-ink">Phone away</button>
+            </div>
+            <div class="flex gap-2">
+              <input id="focus-log-note" type="text" placeholder="Quick note (e.g., Finished Chem pre-lab before dinner)..."
+                class="flex-1 bg-cream text-xs font-medium px-3 py-2.5 rounded-xl border-2 border-ink focus:outline-none" />
+              <button type="submit" class="tactile-btn px-4 py-2.5 rounded-xl bg-emerald-400 text-ink font-display font-extrabold text-xs">
+                Save
+              </button>
+            </div>
+          </form>
+
+          <div id="focus-log-list" class="space-y-2.5 max-h-96 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+
+      <!-- Reset Footer -->
+      <div class="pt-5 border-t-2 border-dashed border-stone-300 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-stone-600">
+        <p>Everything saves automatically right in your browser.</p>
+        <button onclick="resetAllToDefaults()" class="tactile-btn px-3.5 py-2 rounded-xl bg-rose-200 text-ink font-display font-bold text-xs">
+          Reset Everything to Default Sample
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[#FFFDF7] border-t-2 border-ink px-2 py-1.5 flex items-center justify-around no-print" aria-label="Mobile Tabs">
+    <button onclick="switchTab('today')" data-tab="today" class="mobile-nav-btn flex-1 py-1.5 rounded-xl text-xs font-display font-extrabold">
+      Today
+    </button>
+    <button onclick="switchTab('inbox')" data-tab="inbox" class="mobile-nav-btn flex-1 py-1.5 rounded-xl text-xs font-display font-extrabold relative">
+      Inbox <span id="mobile-inbox-badge" class="font-mono text-[10px] px-1.5 rounded bg-ink text-white ml-0.5">0</span>
+    </button>
+    <button onclick="switchTab('week')" data-tab="week" class="mobile-nav-btn flex-1 py-1.5 rounded-xl text-xs font-display font-extrabold">
+      Week
+    </button>
+    <button onclick="switchTab('guide')" data-tab="guide" class="mobile-nav-btn flex-1 py-1.5 rounded-xl text-xs font-display font-extrabold">
+      Classes
+    </button>
+  </nav>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: POST-TIMER CHECK-IN                                          -->
+  <!-- ===================================================================== -->
+  <div id="timer-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink/40 backdrop-blur-xs p-4">
+    <div class="stationery-card rounded-2xl max-w-md w-full p-6 bg-[#FFFDF7] space-y-4 animate-stamp">
+      <div class="space-y-1.5">
+        <span class="font-mono text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-emerald-300 border border-ink">
+          TIME'S UP!
+        </span>
+        <h3 class="font-display font-extrabold text-2xl text-ink">You beat the starting wall.</h3>
+        <p class="text-xs sm:text-sm font-medium text-stone-700 leading-relaxed">
+          Quick check-in: Did you get started? Pick what makes the most sense next—no guilt either way.
+        </p>
+      </div>
+
+      <!-- Quick Reflection Input -->
+      <div class="bg-cream p-3 rounded-xl border-2 border-ink space-y-2">
+        <label class="block font-mono text-[11px] font-bold uppercase text-stone-600">What helped you start? (Optional)</label>
+        <input id="post-timer-note" type="text" placeholder="e.g., Just opening the packet got me rolling..."
+          class="w-full bg-white text-xs font-medium px-3 py-2 rounded-lg border-2 border-ink focus:outline-none" />
+      </div>
+
+      <div class="space-y-2">
+        <button onclick="handleTimerModalChoice('keep-going')"
+          class="tactile-btn w-full py-3 px-4 rounded-xl bg-amber-300 text-ink font-display font-extrabold text-sm flex items-center justify-between">
+          <span>Keep rolling (+10 more mins)</span>
+          <span class="font-mono text-xs">+10M</span>
+        </button>
+        <button onclick="handleTimerModalChoice('break')"
+          class="tactile-btn w-full py-3 px-4 rounded-xl bg-sky-200 text-ink font-display font-extrabold text-sm flex items-center justify-between">
+          <span>Take a 5-minute brain break</span>
+          <span class="font-mono text-xs">5M BREAK</span>
+        </button>
+        <button onclick="handleTimerModalChoice('done-task')"
+          class="tactile-btn w-full py-3 px-4 rounded-xl bg-emerald-300 text-ink font-display font-extrabold text-sm flex items-center justify-between">
+          <span>Stamp active card DONE!</span>
+          <span class="font-mono text-xs">DONE ✓</span>
+        </button>
+        <button onclick="handleTimerModalChoice('pause')"
+          class="w-full py-2 text-xs font-bold text-stone-600 hover:text-ink">
+          Pause here for now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: PICK FROM INBOX                                              -->
+  <!-- ===================================================================== -->
+  <div id="pick-inbox-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink/40 backdrop-blur-xs p-4">
+    <div class="stationery-card rounded-2xl max-w-lg w-full p-5 sm:p-6 bg-[#FFFDF7] space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <span id="pick-modal-badge" class="font-mono text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-amber-200 border border-ink">SLOT</span>
+          <h3 class="font-display font-extrabold text-lg text-ink mt-1">Pick a card from your Inbox</h3>
+        </div>
+        <button onclick="closePickInboxModal()" class="tactile-btn px-2.5 py-1 rounded-lg bg-white font-mono text-xs font-bold">✕</button>
+      </div>
+      <div id="pick-inbox-list" class="space-y-2.5 max-h-80 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: END OF DAY RESET                                             -->
+  <!-- ===================================================================== -->
+  <div id="eod-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink/40 backdrop-blur-xs p-4">
+    <div class="stationery-card rounded-2xl max-w-md w-full p-6 bg-[#FFFDF7] space-y-4">
+      <span class="font-mono text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-emerald-200 border border-ink">
+        END-OF-DAY RESET
+      </span>
+      <h3 class="font-display font-extrabold text-xl text-ink">Close out tonight's desk?</h3>
+      <p class="text-xs sm:text-sm font-medium text-stone-700 leading-relaxed">
+        Any unfinished tasks in your Top 3 will roll straight back into your <strong>Assignment Inbox</strong> so tomorrow starts clean.
+      </p>
+      <div class="bg-cream p-3.5 rounded-xl border-2 border-ink space-y-2">
+        <label class="flex items-center gap-2.5 text-xs font-bold text-ink cursor-pointer">
+          <input id="eod-pack-bag" type="checkbox" checked class="w-4 h-4 accent-ink" />
+          <span>Backpack packed & laptop plugged in</span>
+        </label>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-xs font-bold text-stone-700">Tomorrow's Hard Stop:</span>
+          <input id="eod-tomorrow-stop" type="time" value="21:30" class="font-mono text-xs font-bold bg-white px-2 py-1 rounded border-2 border-ink" />
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-1">
+        <button onclick="closeEndOfDayModal()" class="tactile-btn px-4 py-2 rounded-xl bg-white text-xs font-display font-bold">
+          Keep Working
+        </button>
+        <button onclick="confirmEndOfDayReset()" class="tactile-btn px-4 py-2 rounded-xl bg-emerald-400 text-xs font-display font-extrabold">
+          Roll Over & Close Desk
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT LOGIC                                                      -->
+  <!-- ===================================================================== -->
+  <script>
+    const STORAGE_KEY = 'schoolwork_launchpad_stationery_v2';
+
+    // Exact 5 User Classes with Color-Coded Stationery Stickers
+    const CLASS_STYLES = {
+      'Honors Chem': {
+        bg: '#CCFBF1',
+        accent: '#0EA5E9',
+        badgeClass: 'bg-[#CCFBF1] text-[#0F172A] border-[#1C1917]',
+        chipActive: 'bg-[#5EEAD4] text-[#1C1917] border-[#1C1917] shadow-[2px_2px_0px_#1C1917]',
+        chipIdle: 'bg-[#CCFBF1]/60 text-[#1C1917] border-[#1C1917]'
+      },
+      'Honors Precalc': {
+        bg: '#FFEDD5',
+        accent: '#F97316',
+        badgeClass: 'bg-[#FFEDD5] text-[#1C1917] border-[#1C1917]',
+        chipActive: 'bg-[#FDBA74] text-[#1C1917] border-[#1C1917] shadow-[2px_2px_0px_#1C1917]',
+        chipIdle: 'bg-[#FFEDD5]/60 text-[#1C1917] border-[#1C1917]'
+      },
+      'Honors American Studies': {
+        bg: '#FEF9C3',
+        accent: '#EAB308',
+        badgeClass: 'bg-[#FEF9C3] text-[#1C1917] border-[#1C1917]',
+        chipActive: 'bg-[#FDE047] text-[#1C1917] border-[#1C1917] shadow-[2px_2px_0px_#1C1917]',
+        chipIdle: 'bg-[#FEF9C3]/70 text-[#1C1917] border-[#1C1917]'
+      },
+      'Topics in Science Research': {
+        bg: '#D1FAE5',
+        accent: '#10B981',
+        badgeClass: 'bg-[#D1FAE5] text-[#1C1917] border-[#1C1917]',
+        chipActive: 'bg-[#6EE7B7] text-[#1C1917] border-[#1C1917] shadow-[2px_2px_0px_#1C1917]',
+        chipIdle: 'bg-[#D1FAE5]/60 text-[#1C1917] border-[#1C1917]'
+      },
+      'Spanish 4': {
+        bg: '#FCE7F3',
+        accent: '#EC4899',
+        badgeClass: 'bg-[#FCE7F3] text-[#1C1917] border-[#1C1917]',
+        chipActive: 'bg-[#F9A8D4] text-[#1C1917] border-[#1C1917] shadow-[2px_2px_0px_#1C1917]',
+        chipIdle: 'bg-[#FCE7F3]/60 text-[#1C1917] border-[#1C1917]'
+      }
+    };
+
+    const USER_CLASSES_LIST = [
+      'Honors Chem',
+      'Honors Precalc',
+      'Honors American Studies',
+      'Topics in Science Research',
+      'Spanish 4'
+    ];
+
+    function getClassStyle(className) {
+      if (!className) {
+        return {
+          bg: '#F5F5F4',
+          badgeClass: 'bg-stone-100 text-ink border-ink',
+          chipActive: 'bg-stone-300 text-ink border-ink',
+          chipIdle: 'bg-white text-ink border-ink'
+        };
+      }
+      const exact = CLASS_STYLES[className];
+      if (exact) return exact;
+      // Fuzzy match if user typed slight variation
+      const lower = className.toLowerCase();
+      if (lower.includes('chem')) return CLASS_STYLES['Honors Chem'];
+      if (lower.includes('calc')) return CLASS_STYLES['Honors Precalc'];
+      if (lower.includes('american') || lower.includes('studies') || lower.includes('hist')) return CLASS_STYLES['Honors American Studies'];
+      if (lower.includes('research') || lower.includes('topics')) return CLASS_STYLES['Topics in Science Research'];
+      if (lower.includes('span')) return CLASS_STYLES['Spanish 4'];
+      return {
+        bg: '#E0E7FF',
+        badgeClass: 'bg-indigo-100 text-ink border-ink',
+        chipActive: 'bg-indigo-300 text-ink border-ink',
+        chipIdle: 'bg-indigo-50 text-ink border-ink'
+      };
+    }
+
+    const TINY_STEP_EXAMPLES = [
+      "Open the PDF/doc and read just the title & instructions.",
+      "Write 1 messy sentence or set up the first equation only.",
+      "Set a 5-minute timer and put your notes open on the desk.",
+      "Do just ONE example problem to warm up your brain.",
+      "Highlight 3 key terms on the first page—nothing else.",
+      "Open the rubric and check what's actually graded.",
+      "Put your phone across the room, take 3 breaths, and open the tab."
+    ];
+
+    const STUCK_OPTIONS = [
+      "Text a classmate",
+      "Email teacher",
+      "Do just 1 example",
+      "Switch to Quick Win",
+      "Watch a 3-min explainer",
+      "Take a 5-min water break"
+    ];
+
+    const ENERGY_LEVELS = [
+      { level: 1, tag: "1 / 5", label: "Fried", color: "bg-rose-300", advice: "Brain is fried. Just do the tiniest 2-minute step on #1, check off 1 Quick Win if you can, and protect your sleep." },
+      { level: 2, tag: "2 / 5", label: "Foggy", color: "bg-orange-300", advice: "Low battery mode: grab water + a snack first, shrink your Must-Do into a 2-minute setup step, and run one 10m timer." },
+      { level: 3, tag: "3 / 5", label: "Steady", color: "bg-amber-300", advice: "Solid baseline. Start with a 10-minute timer on your Must-Do—once you're moving, the rest gets way easier." },
+      { level: 4, tag: "4 / 5", label: "Dialed", color: "bg-emerald-300", advice: "Great energy right now. Knock out the hardest part of your Must-Do first while your brain is sharp." },
+      { level: 5, tag: "5 / 5", label: "Locked In", color: "bg-sky-300", advice: "Full battery! Ride the momentum through your Top 3—just remember to stop when your Hard Stop hits." }
+    ];
+
+    function getRelativeDateISO(daysOffset) {
+      const d = new Date();
+      d.setDate(d.getDate() + daysOffset);
+      return d.toISOString().split('T')[0];
+    }
+
+    function getDefaultState() {
+      return {
+        activeTab: 'today',
+        energy: 3,
+        hardStop: '21:30',
+        landingCollapsed: false,
+        landingChecklist: [
+          { id: 'l1', text: 'Snack & big glass of water', done: false },
+          { id: 'l2', text: '10-min phone-free decompress', done: false },
+          { id: 'l3', text: 'Brain dump loose tasks to Inbox', done: false },
+          { id: 'l4', text: 'Pick Top 3 cards for tonight', done: false }
+        ],
+        topThree: {
+          must: {
+            title: 'Stoichiometry & Limiting Reactant Worksheet (#1–6)',
+            className: 'Honors Chem',
+            tinyStep: 'Open packet & write the balanced equation for #1 only',
+            minutes: 20,
+            stuckPlan: 'Do just 1 example',
+            reward: '10m YouTube / snack break',
+            done: false,
+            inboxId: 'sample-1'
+          },
+          should: {
+            title: 'Primary Source Annotation: Progressive Era Packet',
+            className: 'Honors American Studies',
+            tinyStep: 'Read page 1 & underline 2 main claims',
+            minutes: 20,
+            stuckPlan: 'Text a classmate',
+            reward: 'Stretch + music',
+            done: false,
+            inboxId: 'sample-2'
+          },
+          quick: {
+            title: 'Subjunctive Quizlet Set (15 flashcards)',
+            className: 'Spanish 4',
+            tinyStep: 'Open Quizlet app & do 5 cards',
+            minutes: 10,
+            stuckPlan: 'Switch to Quick Win',
+            reward: 'Done for tonight!',
+            done: false,
+            inboxId: 'sample-3'
+          }
+        },
+        inbox: [
+          {
+            id: 'sample-1',
+            title: 'Stoichiometry & Limiting Reactant Worksheet (#1–6)',
+            className: 'Honors Chem',
+            priority: 'Must',
+            dueDate: getRelativeDateISO(1),
+            tinyStep: 'Open packet & write the balanced equation for #1 only',
+            done: false,
+            isSample: true
+          },
+          {
+            id: 'sample-2',
+            title: 'Primary Source Annotation: Progressive Era Packet',
+            className: 'Honors American Studies',
+            priority: 'Should',
+            dueDate: getRelativeDateISO(2),
+            tinyStep: 'Read page 1 & underline 2 main claims',
+            done: false,
+            isSample: true
+          },
+          {
+            id: 'sample-3',
+            title: 'Subjunctive Quizlet Set (15 flashcards)',
+            className: 'Spanish 4',
+            priority: 'Quick Win',
+            dueDate: getRelativeDateISO(1),
+            tinyStep: 'Open Quizlet app & do 5 cards',
+            done: false,
+            isSample: true
+          },
+          {
+            id: 'sample-4',
+            title: 'Trig Identities Practice Set (p. 342 #1–10 odd)',
+            className: 'Honors Precalc',
+            priority: 'Should',
+            dueDate: getRelativeDateISO(3),
+            tinyStep: 'Copy problem #1 onto graph paper',
+            done: false,
+            isSample: true
+          },
+          {
+            id: 'sample-5',
+            title: 'Find 2 peer-reviewed sources for Literature Review',
+            className: 'Topics in Science Research',
+            priority: 'Should',
+            dueDate: getRelativeDateISO(5),
+            tinyStep: 'Open Google Scholar & save 1 abstract PDF',
+            done: false,
+            isSample: true
+          }
+        ],
+        inboxFilter: 'All',
+        selectedCaptureClass: 'Honors Chem',
+        weekPlan: {
+          Mon: { commitment: 'After-school practice / club', topTask: 'Honors Chem Lab Pre-Read', secondTask: 'Spanish 4 vocab', startStop: '7:00 – 9:00 PM', notes: '' },
+          Tue: { commitment: 'Practice 3:45–5:45 PM', topTask: 'Honors Precalc Problem Set', secondTask: 'Am. Studies reading', startStop: '7:15 – 9:15 PM', notes: '' },
+          Wed: { commitment: 'Lighter afternoon', topTask: 'Topics in Sci Research Lit Review', secondTask: 'Honors Chem worksheet', startStop: '4:30 – 6:30 PM', notes: 'Best day for deep work' },
+          Thu: { commitment: 'Practice 3:45–5:45 PM', topTask: 'Honors American Studies Seminar Prep', secondTask: 'Precalc quiz review', startStop: '7:00 – 9:15 PM', notes: '' },
+          Fri: { commitment: 'Friday afternoon free', topTask: 'Spanish 4 short reflection', secondTask: 'Clean out backpack', startStop: '4:00 – 5:00 PM', notes: 'No late-night HW!' },
+          Sat: { commitment: 'Morning activity / rest', topTask: '1 focused 25m block (optional)', secondTask: '', startStop: 'Flexible', notes: '' },
+          Sun: { commitment: 'Rest & recharge', topTask: '15-Min Weekly Reset', secondTask: 'Pack bag for Monday', startStop: '5:00 – 5:30 PM', notes: '' }
+        },
+        weeklyResetChecklist: [
+          { id: 'wr1', text: 'Scan Canvas / Google Classroom for tests this week', done: false },
+          { id: 'wr2', text: 'Spot heavy practice/late days on the 7-day spread', done: false },
+          { id: 'wr3', text: 'Clear loose papers out of folder & charge laptop', done: false }
+        ],
+        classes: [
+          {
+            id: 'c-chem',
+            name: 'Honors Chem',
+            teacher: 'Teacher / Room #',
+            platform: 'Canvas + Lab Notebook',
+            pattern: 'Problem sets 2x/week + weekly lab write-ups.',
+            helpWhere: 'Morning extra help / Khan Academy stoichiometry'
+          },
+          {
+            id: 'c-precalc',
+            name: 'Honors Precalc',
+            teacher: 'Teacher / Room #',
+            platform: 'DeltaMath / Graph Notebook',
+            pattern: 'Short nightly practice sets; quizzes on Fridays.',
+            helpWhere: 'Math lab during study hall / check odd answers in back'
+          },
+          {
+            id: 'c-amstud',
+            name: 'Honors American Studies',
+            teacher: 'Teacher / Room #',
+            platform: 'Google Classroom + Readings',
+            pattern: 'Primary source annotations & seminar discussions.',
+            helpWhere: 'Writing Center or email thesis outline early'
+          },
+          {
+            id: 'c-research',
+            name: 'Topics in Science Research',
+            teacher: 'Teacher / Room #',
+            platform: 'Google Drive + Scholar / JSTOR',
+            pattern: 'Milestone checkpoints: articles, methods, poster/paper.',
+            helpWhere: '1-on-1 teacher check-in + school library databases'
+          },
+          {
+            id: 'c-span4',
+            name: 'Spanish 4',
+            teacher: 'Teacher / Room #',
+            platform: 'Vista / Google Classroom / Quizlet',
+            pattern: 'Grammar practice, short readings & speaking prompts.',
+            helpWhere: 'WordReference + 10-min daily Quizlet review'
+          }
+        ],
+        focusLogs: [
+          {
+            id: 'fl1',
+            date: 'Yesterday',
+            tag: '10-min timer',
+            note: 'Set 10 mins for Honors Chem—ended up finishing 4 problems once I got started.'
+          },
+          {
+            id: 'fl2',
+            date: '2 days ago',
+            tag: 'Kitchen table',
+            note: 'Worked at the kitchen table with brown noise headphones instead of my bed.'
+          }
+        ]
+      };
+    }
+
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+        return { ...getDefaultState(), ...parsed };
+      } catch (e) {
+        return getDefaultState();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // =========================================================================
+    // TOASTS & CONFETTI
+    // =========================================================================
+    function showToast(message, badge = 'NICE') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-ink text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-xl border-2 border-ink shadow-[3px_3px_0px_#F59E0B] flex items-center gap-2.5 transform transition-all duration-300 translate-y-2 opacity-0';
+      toast.innerHTML = `<span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-300 text-ink font-extrabold">${escapeHtml(badge)}</span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 2700);
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 55,
+          spread: 65,
+          origin: { y: 0.7 },
+          colors: ['#0EA5E9', '#F97316', '#EAB308', '#10B981', '#EC4899']
+        });
+      }
+    }
+
+    // =========================================================================
+    // NAVIGATION & TUNNEL VISION (FOCUS MODE)
+    // =========================================================================
+    const TAB_COLORS = {
+      today: 'bg-amber-300 text-ink shadow-[3px_3px_0px_#1C1917] -translate-y-0.5',
+      inbox: 'bg-sky-300 text-ink shadow-[3px_3px_0px_#1C1917] -translate-y-0.5',
+      week: 'bg-emerald-300 text-ink shadow-[3px_3px_0px_#1C1917] -translate-y-0.5',
+      guide: 'bg-pink-300 text-ink shadow-[3px_3px_0px_#1C1917] -translate-y-0.5'
+    };
+
+    function switchTab(tabName) {
+      state.activeTab = tabName;
+      saveState();
+
+      ['today', 'inbox', 'week', 'guide'].forEach(t => {
+        const el = document.getElementById(`view-${t}`);
+        if (el) el.classList.toggle('hidden', t !== tabName);
+      });
+
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        const t = btn.dataset.tab;
+        const activeStyle = TAB_COLORS[t] || 'bg-amber-300';
+        btn.className = t === tabName
+          ? `nav-tab px-4 py-1.5 rounded-xl text-sm font-display font-extrabold border-2 border-ink transition-all flex items-center gap-2 ${activeStyle}`
+          : 'nav-tab px-4 py-1.5 rounded-xl text-sm font-display font-bold border-2 border-ink bg-white hover:bg-stone-100 text-ink transition-all flex items-center gap-2';
+      });
+
+      document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+        const t = btn.dataset.tab;
+        btn.className = t === tabName
+          ? 'mobile-nav-btn flex-1 py-1.5 rounded-xl text-xs font-display font-extrabold bg-amber-300 border-2 border-ink text-ink'
+          : 'mobile-nav-btn flex-1 py-1.5 rounded-xl text-xs font-display font-bold text-stone-600';
+      });
+
+      renderAll();
+    }
+
+    let isTunnelVision = false;
+    function toggleTunnelVision() {
+      isTunnelVision = !isTunnelVision;
+      document.body.classList.toggle('tunnel-vision', isTunnelVision);
+      const btn = document.getElementById('tunnel-btn');
+      const dot = document.getElementById('tunnel-dot');
+      const label = document.getElementById('tunnel-label');
+
+      if (isTunnelVision) {
+        btn.classList.add('bg-ink', 'text-white');
+        btn.classList.remove('bg-white', 'text-ink');
+        dot.classList.replace('bg-emerald-400', 'bg-amber-300');
+        label.textContent = 'Exit Tunnel';
+        showToast('Tunnel Vision on: only your active card & timer stay bright.', 'FOCUS');
+      } else {
+        btn.classList.remove('bg-ink', 'text-white');
+        btn.classList.add('bg-white', 'text-ink');
+        dot.classList.replace('bg-amber-300', 'bg-emerald-400');
+        label.textContent = 'Tunnel Vision';
+      }
+      renderTopThree();
+    }
+
+    // =========================================================================
+    // TODAY'S DESK RENDERING
+    // =========================================================================
+    function renderTodayHeader() {
+      const now = new Date();
+      document.getElementById('today-date-label').textContent =
+        now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
+
+      document.getElementById('hard-stop-input').value = state.hardStop || '21:30';
+
+      // Energy Buttons
+      const energyContainer = document.getElementById('energy-buttons');
+      energyContainer.innerHTML = ENERGY_LEVELS.map(item => {
+        const selected = state.energy === item.level;
+        return `
+          <button onclick="setEnergy(${item.level})"
+            class="py-2.5 px-1.5 rounded-xl border-2 border-ink text-center transition flex flex-col items-center gap-0.5 ${
+              selected
+                ? `${item.color} text-ink shadow-[2.5px_2.5px_0px_#1C1917] -translate-y-0.5 font-extrabold`
+                : 'bg-white hover:bg-stone-50 text-stone-700 font-bold'
+            }">
+            <span class="font-mono text-[11px] font-extrabold">${item.tag}</span>
+            <span class="text-xs leading-tight">${item.label}</span>
+          </button>
+        `;
+      }).join('');
+
+      const currentEnergy = ENERGY_LEVELS.find(e => e.level === state.energy) || ENERGY_LEVELS[2];
+      const adviceBox = document.getElementById('energy-advice-box');
+      adviceBox.className = `mt-3.5 rounded-xl p-3 border-2 border-ink ${currentEnergy.color}/45 text-ink text-xs sm:text-sm font-semibold leading-snug`;
+      adviceBox.textContent = currentEnergy.advice;
+
+      // Landing Strip
+      const doneCount = state.landingChecklist.filter(i => i.done).length;
+      document.getElementById('landing-progress-pill').textContent = `${doneCount}/${state.landingChecklist.length}`;
+
+      const bodyEl = document.getElementById('landing-checklist-body');
+      const chevronEl = document.getElementById('landing-chevron');
+      bodyEl.classList.toggle('hidden', state.landingCollapsed);
+      chevronEl.style.transform = state.landingCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+
+      bodyEl.innerHTML = state.landingChecklist.map(item => `
+        <label class="flex items-center gap-2.5 px-3 py-2 rounded-xl border-2 border-ink cursor-pointer transition ${
+          item.done ? 'bg-white/60 text-stone-400 line-through' : 'bg-white hover:bg-amber-50 text-ink'
+        }">
+          <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleLandingItem('${item.id}')"
+            class="w-4 h-4 accent-ink cursor-pointer" />
+          <span class="text-xs font-bold">${escapeHtml(item.text)}</span>
+        </label>
+      `).join('');
+    }
+
+    function setEnergy(level) {
+      state.energy = level;
+      saveState();
+      renderTodayHeader();
+    }
+
+    function updateHardStop(val) {
+      state.hardStop = val;
+      saveState();
+      showToast(`Hard stop set for ${val}.`, 'STOP');
+    }
+
+    function toggleLandingCollapse() {
+      state.landingCollapsed = !state.landingCollapsed;
+      saveState();
+      renderTodayHeader();
+    }
+
+    function toggleLandingItem(id) {
+      const item = state.landingChecklist.find(i => i.id === id);
+      if (item) {
+        item.done = !item.done;
+        saveState();
+        renderTodayHeader();
+      }
+    }
+
+    function handleQuickBrainDump(e) {
+      e.preventDefault();
+      const input = document.getElementById('quick-dump-input');
+      const title = input.value.trim();
+      if (!title) return;
+
+      state.inbox.unshift({
+        id: 'task-' + Date.now(),
+        title,
+        className: 'Honors Chem',
+        priority: 'Should',
+        dueDate: '',
+        tinyStep: '',
+        done: false,
+        isSample: false
+      });
+      input.value = '';
+      saveState();
+      updateBadges();
+      showToast('Parked in Inbox! Tag the class whenever.', 'INBOX');
+    }
+
+    // =========================================================================
+    // TOP THREE CARDS RENDERING
+    // =========================================================================
+    function renderTopThree() {
+      const container = document.getElementById('top-three-container');
+      const activeTimerSlot = document.getElementById('timer-active-slot').value;
+
+      const slots = [
+        {
+          key: 'must',
+          badge: '1 — MUST DO',
+          headerBg: 'bg-rose-300',
+          cardTint: 'bg-[#FFFDFB]',
+        },
+        {
+          key: 'should',
+          badge: '2 — SHOULD DO',
+          headerBg: 'bg-sky-300',
+          cardTint: 'bg-[#FBFDFF]',
+        },
+        {
+          key: 'quick',
+          badge: '3 — QUICK WIN',
+          headerBg: 'bg-purple-300',
+          cardTint: 'bg-[#FDFBFF]',
+        }
+      ];
+
+      container.innerHTML = slots.map(slot => {
+        const task = state.topThree[slot.key];
+        const classStyle = getClassStyle(task.className);
+        const isTimerTarget = activeTimerSlot === slot.key;
+        const dimClass = (isTunnelVision && !isTimerTarget) ? 'dim-in-tunnel' : '';
+
+        return `
+          <div class="stationery-card rounded-2xl overflow-hidden transition-all ${slot.cardTint} ${dimClass} ${
+            task.done ? 'opacity-80' : ''
+          }">
+            <!-- Top Colored Strip Header -->
+            <div class="${slot.headerBg} px-4 py-2.5 border-b-2 border-ink flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono text-xs font-extrabold tracking-wide text-ink">
+                  ${slot.badge}
+                </span>
+
+                <!-- Class Color-Coded Dropdown Pill -->
+                <select onchange="updateTopThreeField('${slot.key}', 'className', this.value)"
+                  class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg border-2 border-ink cursor-pointer focus:outline-none ${classStyle.badgeClass}">
+                  ${USER_CLASSES_LIST.map(c => `
+                    <option value="${escapeHtml(c)}" ${task.className === c ? 'selected' : ''}>${escapeHtml(c)}</option>
+                  `).join('')}
+                </select>
+
+                ${isTimerTarget ? `<span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-ink text-white">IN TIMER</span>` : ''}
+              </div>
+
+              <div class="flex items-center gap-1.5 no-print">
+                <button onclick="openPickInboxModal('${slot.key}')"
+                  class="px-2.5 py-1 rounded-lg text-xs font-display font-bold bg-white hover:bg-stone-100 border-2 border-ink text-ink transition">
+                  Swap from Inbox
+                </button>
+                <button onclick="focusThisSlot('${slot.key}')"
+                  class="px-2.5 py-1 rounded-lg text-xs font-display font-bold bg-amber-200 hover:bg-amber-300 border-2 border-ink text-ink transition">
+                  Load Timer
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-4 sm:p-5 space-y-4">
+              <!-- Checkbox Stamp + Editable Assignment Title -->
+              <div class="flex items-start gap-3.5">
+                <button onclick="toggleTopThreeDone('${slot.key}')" aria-label="Mark ${slot.badge} done"
+                  class="mt-0.5 w-8 h-8 rounded-xl border-2 border-ink flex items-center justify-center shrink-0 transition cursor-pointer ${
+                    task.done
+                      ? 'bg-emerald-400 text-ink shadow-[2px_2px_0px_#1C1917] animate-stamp'
+                      : 'bg-white hover:bg-amber-100 text-transparent'
+                  }">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+
+                <div class="flex-1 min-w-0">
+                  <input type="text" value="${escapeHtml(task.title)}"
+                    placeholder="Type assignment name or swap from Inbox..."
+                    onchange="updateTopThreeField('${slot.key}', 'title', this.value)"
+                    class="w-full font-display font-extrabold text-base sm:text-lg bg-transparent focus:bg-amber-50 rounded-lg px-2 py-1 -ml-2 focus:outline-none transition ${
+                      task.done ? 'line-through text-stone-400' : 'text-ink'
+                    }" />
+                </div>
+              </div>
+
+              <!-- First Tiny Step Box with "Make it even smaller" button -->
+              <div class="bg-cream rounded-xl p-3 border-2 border-ink space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="font-mono text-[11px] font-extrabold uppercase text-ink">
+                    FIRST TINY STEP (&lt; 2 MINS):
+                  </span>
+                  <button type="button" onclick="shrinkTinyStep('${slot.key}')"
+                    class="px-2.5 py-0.5 rounded-lg text-[11px] font-display font-extrabold bg-amber-300 hover:bg-amber-400 border border-ink text-ink transition no-print">
+                    Make it even smaller
+                  </button>
+                </div>
+                <input type="text" value="${escapeHtml(task.tinyStep)}"
+                  placeholder="e.g., Open the PDF and read just the title..."
+                  onchange="updateTopThreeField('${slot.key}', 'tinyStep', this.value)"
+                  class="w-full bg-white text-xs sm:text-sm font-semibold text-ink px-3 py-2 rounded-lg border-2 border-ink focus:outline-none" />
+              </div>
+
+              <!-- Bottom Metadata Strip: Planned Mins | If I get stuck... | Reward/Break -->
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 text-xs">
+                <div class="sm:col-span-3 bg-white rounded-xl p-2.5 border-2 border-ink">
+                  <label class="block font-mono text-[10px] font-extrabold uppercase text-stone-500">EST. MINS</label>
+                  <input type="number" min="5" max="120" step="5" value="${task.minutes || 15}"
+                    onchange="updateTopThreeField('${slot.key}', 'minutes', this.value)"
+                    class="w-full font-mono text-sm font-extrabold text-ink mt-0.5 focus:outline-none" />
+                </div>
+
+                <div class="sm:col-span-5 bg-white rounded-xl p-2.5 border-2 border-ink">
+                  <label class="block font-mono text-[10px] font-extrabold uppercase text-stone-500">IF I GET STUCK...</label>
+                  <select onchange="updateTopThreeField('${slot.key}', 'stuckPlan', this.value)"
+                    class="w-full font-bold text-xs text-ink mt-0.5 bg-transparent focus:outline-none cursor-pointer">
+                    ${STUCK_OPTIONS.map(opt => `
+                      <option value="${escapeHtml(opt)}" ${task.stuckPlan === opt ? 'selected' : ''}>${escapeHtml(opt)}</option>
+                    `).join('')}
+                  </select>
+                </div>
+
+                <div class="sm:col-span-4 bg-white rounded-xl p-2.5 border-2 border-ink">
+                  <label class="block font-mono text-[10px] font-extrabold uppercase text-stone-500">AFTERWARD REWARD</label>
+                  <input type="text" value="${escapeHtml(task.reward || '')}" placeholder="Snack / break..."
+                    onchange="updateTopThreeField('${slot.key}', 'reward', this.value)"
+                    class="w-full font-bold text-xs text-ink mt-0.5 focus:outline-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      updateTimerPreviewText();
+    }
+
+    function updateTopThreeField(slotKey, field, value) {
+      state.topThree[slotKey][field] = value;
+      saveState();
+      if (field === 'className') renderTopThree();
+      if (field === 'title' || field === 'tinyStep') {
+        updateTimerDropdownOptions();
+        updateTimerPreviewText();
+      }
+    }
+
+    function toggleTopThreeDone(slotKey) {
+      const task = state.topThree[slotKey];
+      task.done = !task.done;
+
+      if (task.inboxId) {
+        const inboxItem = state.inbox.find(i => i.id === task.inboxId);
+        if (inboxItem) inboxItem.done = task.done;
+      }
+
+      saveState();
+      renderTopThree();
+      updateBadges();
+
+      if (task.done) {
+        triggerConfetti();
+        const allDone = ['must', 'should', 'quick'].every(k => state.topThree[k].done);
+        showToast(allDone ? 'ALL THREE STAMPED DONE! Huge win!' : 'Stamped done! Momentum unlocked.', 'DONE ✓');
+      }
+    }
+
+    function shrinkTinyStep(slotKey) {
+      const current = state.topThree[slotKey].tinyStep;
+      const options = TINY_STEP_EXAMPLES.filter(ex => ex !== current);
+      state.topThree[slotKey].tinyStep = options[Math.floor(Math.random() * options.length)];
+      saveState();
+      renderTopThree();
+      showToast('Shrunk down to a 2-minute micro-step!', 'TINY');
+    }
+
+    function focusThisSlot(slotKey) {
+      document.getElementById('timer-active-slot').value = slotKey;
+      renderTopThree();
+      document.getElementById('timer-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showToast('Loaded into your 10-Minute Timer!', 'TIMER');
+    }
+
+    // =========================================================================
+    // 10-MINUTE START TIMER LOGIC
+    // =========================================================================
+    let timerTotalSeconds = 10 * 60;
+    let timerRemainingSeconds = 10 * 60;
+    let timerLabel = '10M START';
+    let timerInterval = null;
+    let timerSoundEnabled = true;
+
+    const RING_CIRCUMFERENCE = 2 * Math.PI * 80; // ~502.65
+
+    function updateTimerDropdownOptions() {
+      const select = document.getElementById('timer-active-slot');
+      const currentVal = select.value;
+      const labels = {
+        must: `1 — MUST: ${state.topThree.must.title || 'Unassigned'}`,
+        should: `2 — SHOULD: ${state.topThree.should.title || 'Unassigned'}`,
+        quick: `3 — QUICK WIN: ${state.topThree.quick.title || 'Unassigned'}`
+      };
+      select.innerHTML = Object.entries(labels).map(([k, text]) => `
+        <option value="${k}" ${k === currentVal ? 'selected' : ''}>${escapeHtml(text)}</option>
+      `).join('');
+    }
+
+    function updateTimerPreviewText() {
+      const slotKey = document.getElementById('timer-active-slot').value || 'must';
+      const step = state.topThree[slotKey]?.tinyStep;
+      document.getElementById('timer-tiny-step-preview').textContent = step
+        ? `Tiny step: ${step}`
+        : 'Tiny step: Open your materials and do just 2 minutes.';
+    }
+
+    function setActiveTimerSlot() {
+      renderTopThree();
+    }
+
+    function setTimerPreset(minutes, label) {
+      pauseTimer();
+      timerTotalSeconds = minutes * 60;
+      timerRemainingSeconds = minutes * 60;
+      timerLabel = label;
+
+      document.getElementById('timer-mode-badge').textContent = label;
+      document.getElementById('timer-start-label').textContent = `Start ${minutes}m Timer`;
+      document.getElementById('timer-status-text').textContent =
+        minutes === 5 ? 'Step away from screens & breathe.' : 'Stop guilt-free when it rings.';
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        const isMatch = Number(btn.dataset.preset) === minutes;
+        if (isMatch && minutes === 5) {
+          btn.className = 'preset-btn py-2 rounded-xl font-mono text-xs font-extrabold border-2 border-ink bg-sky-300 text-ink';
+        } else if (isMatch) {
+          btn.className = 'preset-btn py-2 rounded-xl font-mono text-xs font-extrabold border-2 border-ink bg-orange-400 text-ink';
+        } else if (Number(btn.dataset.preset) === 5) {
+          btn.className = 'preset-btn py-2 rounded-xl font-mono text-xs font-extrabold border-2 border-ink bg-sky-100 text-ink hover:bg-sky-200';
+        } else {
+          btn.className = 'preset-btn py-2 rounded-xl font-mono text-xs font-extrabold border-2 border-ink bg-white text-ink hover:bg-amber-50';
+        }
+      });
+
+      const ring = document.getElementById('timer-ring');
+      ring.setAttribute('stroke', minutes === 5 ? '#0EA5E9' : '#F97316');
+      renderTimerDisplay();
+    }
+
+    function applyCustomMinutes(val) {
+      const mins = Math.max(1, Math.min(90, parseInt(val, 10) || 10));
+      setTimerPreset(mins, `${mins}M CUSTOM`);
+    }
+
+    function toggleTimer() {
+      if (timerInterval) pauseTimer();
+      else startTimer();
+    }
+
+    function startTimer() {
+      if (timerRemainingSeconds <= 0) timerRemainingSeconds = timerTotalSeconds;
+      document.getElementById('timer-start-label').textContent = 'Pause Timer';
+      document.getElementById('timer-status-text').textContent = 'Just focus on the first tiny step...';
+
+      timerInterval = setInterval(() => {
+        timerRemainingSeconds--;
+        renderTimerDisplay();
+        if (timerRemainingSeconds <= 0) {
+          pauseTimer();
+          onTimerComplete();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      const mins = Math.round(timerTotalSeconds / 60);
+      document.getElementById('timer-start-label').textContent =
+        timerRemainingSeconds < timerTotalSeconds && timerRemainingSeconds > 0 ? 'Resume Timer' : `Start ${mins}m Timer`;
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      timerRemainingSeconds = timerTotalSeconds;
+      document.getElementById('timer-status-text').textContent = 'Stop guilt-free when it rings.';
+      renderTimerDisplay();
+    }
+
+    function renderTimerDisplay() {
+      const mins = Math.floor(timerRemainingSeconds / 60);
+      const secs = timerRemainingSeconds % 60;
+      document.getElementById('timer-display').textContent =
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      const fraction = timerTotalSeconds > 0 ? timerRemainingSeconds / timerTotalSeconds : 0;
+      document.getElementById('timer-ring').setAttribute('stroke-dashoffset', RING_CIRCUMFERENCE * (1 - fraction));
+    }
+
+    function toggleTimerSound() {
+      timerSoundEnabled = !timerSoundEnabled;
+      document.getElementById('sound-toggle-btn').textContent = timerSoundEnabled ? 'CHIME: ON' : 'CHIME: OFF';
+    }
+
+    function playGentleChime() {
+      if (!timerSoundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.16);
+          gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.16);
+          gain.gain.exponentialRampToValueAtTime(0.14, ctx.currentTime + idx * 0.16 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.16 + 0.85);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.16);
+          osc.stop(ctx.currentTime + idx * 0.16 + 0.9);
+        });
+      } catch (e) {}
+    }
+
+    function onTimerComplete() {
+      playGentleChime();
+      triggerConfetti();
+      document.getElementById('post-timer-note').value = '';
+      const modal = document.getElementById('timer-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function handleTimerModalChoice(choice) {
+      const note = document.getElementById('post-timer-note').value.trim();
+      const slotKey = document.getElementById('timer-active-slot').value;
+      const taskTitle = state.topThree[slotKey]?.title || 'Study block';
+
+      if (timerTotalSeconds >= 10 * 60) {
+        state.focusLogs.unshift({
+          id: 'fl-' + Date.now(),
+          date: 'Today',
+          tag: timerLabel,
+          note: note || `Ran ${Math.round(timerTotalSeconds / 60)}m on "${taskTitle}"`
+        });
+        saveState();
+      }
+
+      const modal = document.getElementById('timer-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+
+      if (choice === 'keep-going') {
+        setTimerPreset(10, '10M MOMENTUM');
+        startTimer();
+      } else if (choice === 'break') {
+        setTimerPreset(5, '5M BREAK');
+        startTimer();
+      } else if (choice === 'done-task') {
+        if (!state.topThree[slotKey].done) toggleTopThreeDone(slotKey);
+        resetTimer();
+      } else {
+        resetTimer();
+      }
+    }
+
+    // =========================================================================
+    // MODALS: PICK FROM INBOX & END-OF-DAY RESET
+    // =========================================================================
+    function openPickInboxModal(slotKey) {
+      const labels = { must: '1 — MUST DO', should: '2 — SHOULD DO', quick: '3 — QUICK WIN' };
+      document.getElementById('pick-modal-badge').textContent = labels[slotKey];
+
+      const openTasks = state.inbox.filter(t => !t.done);
+      const listEl = document.getElementById('pick-inbox-list');
+
+      if (openTasks.length === 0) {
+        listEl.innerHTML = `<div class="text-center py-6 text-xs font-bold text-stone-500">Inbox is empty! Add tasks in the Inbox tab first.</div>`;
+      } else {
+        listEl.innerHTML = openTasks.map(task => {
+          const cStyle = getClassStyle(task.className);
+          return `
+            <button onclick="assignInboxToSlot('${task.id}', '${slotKey}')"
+              class="w-full text-left p-3 rounded-xl border-2 border-ink bg-white hover:bg-amber-50 transition flex items-center justify-between gap-3">
+              <div class="min-w-0 space-y-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-[11px] font-extrabold px-2 py-0.5 rounded border ${cStyle.badgeClass}">${escapeHtml(task.className || 'Class')}</span>
+                  ${getDueBadge(task.dueDate)}
+                </div>
+                <div class="font-display font-extrabold text-sm text-ink truncate">${escapeHtml(task.title)}</div>
+              </div>
+              <span class="font-mono text-xs font-extrabold px-2.5 py-1 rounded-lg bg-amber-300 border border-ink shrink-0">PICK →</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      const modal = document.getElementById('pick-inbox-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePickInboxModal() {
+      const modal = document.getElementById('pick-inbox-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function assignInboxToSlot(inboxId, slotKey) {
+      const item = state.inbox.find(t => t.id === inboxId);
+      if (!item) return;
+
+      state.topThree[slotKey] = {
+        title: item.title,
+        className: item.className || 'Honors Chem',
+        tinyStep: item.tinyStep || '',
+        minutes: slotKey === 'quick' ? 10 : 20,
+        stuckPlan: state.topThree[slotKey].stuckPlan || 'Do just 1 example',
+        reward: state.topThree[slotKey].reward || '5-min break',
+        done: false,
+        inboxId: item.id
+      };
+
+      saveState();
+      closePickInboxModal();
+      switchTab('today');
+      showToast(`Sent to ${slotKey.toUpperCase()}!`, 'TODAY');
+    }
+
+    function openEndOfDayModal() {
+      document.getElementById('eod-tomorrow-stop').value = state.hardStop || '21:30';
+      const modal = document.getElementById('eod-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEndOfDayModal() {
+      const modal = document.getElementById('eod-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmEndOfDayReset() {
+      ['must', 'should', 'quick'].forEach(slotKey => {
+        const slotTask = state.topThree[slotKey];
+        if (!slotTask.done && slotTask.title.trim()) {
+          const exists = state.inbox.some(i => i.id === slotTask.inboxId || i.title === slotTask.title);
+          if (!exists) {
+            state.inbox.unshift({
+              id: 'rolled-' + Date.now() + '-' + slotKey,
+              title: slotTask.title,
+              className: slotTask.className,
+              priority: slotKey === 'must' ? 'Must' : slotKey === 'should' ? 'Should' : 'Quick Win',
+              dueDate: '',
+              tinyStep: slotTask.tinyStep,
+              done: false,
+              isSample: false
+            });
+          }
+        }
+        state.topThree[slotKey] = {
+          title: '',
+          className: slotTask.className || 'Honors Chem',
+          tinyStep: '',
+          minutes: 15,
+          stuckPlan: 'Do just 1 example',
+          reward: '',
+          done: false,
+          inboxId: null
+        };
+      });
+
+      state.hardStop = document.getElementById('eod-tomorrow-stop').value || state.hardStop;
+      state.landingChecklist.forEach(i => i.done = false);
+
+      saveState();
+      closeEndOfDayModal();
+      renderAll();
+      showToast('Desk cleared & unfinished tasks saved to Inbox!', 'NIGHT');
+    }
+
+    // =========================================================================
+    // ASSIGNMENT INBOX LOGIC
+    // =========================================================================
+    function selectCaptureClass(className) {
+      state.selectedCaptureClass = className;
+      saveState();
+      renderInbox();
+    }
+
+    function getDueBadge(dueDateStr) {
+      if (!dueDateStr) {
+        return `<span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-stone-100 border border-stone-400 text-stone-600">NO DATE</span>`;
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const due = new Date(dueDateStr + 'T00:00:00');
+      const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return `<span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-rose-300 border border-ink text-ink">OVERDUE (${Math.abs(diffDays)}D)</span>`;
+      } else if (diffDays === 0) {
+        return `<span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-rose-300 border border-ink text-ink">DUE TODAY</span>`;
+      } else if (diffDays <= 2) {
+        return `<span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-orange-300 border border-ink text-ink">IN ${diffDays}D</span>`;
+      } else if (diffDays <= 5) {
+        return `<span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-200 border border-ink text-ink">IN ${diffDays}D</span>`;
+      } else {
+        return `<span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-200 border border-ink text-ink">IN ${diffDays}D</span>`;
+      }
+    }
+
+    function addInboxTask(e) {
+      e.preventDefault();
+      const titleInput = document.getElementById('inbox-title');
+      const priorityInput = document.getElementById('inbox-priority');
+      const dueInput = document.getElementById('inbox-due');
+
+      const title = titleInput.value.trim();
+      if (!title) return;
+
+      state.inbox.unshift({
+        id: 'task-' + Date.now(),
+        title,
+        className: state.selectedCaptureClass || 'Honors Chem',
+        priority: priorityInput.value,
+        dueDate: dueInput.value,
+        tinyStep: '',
+        done: false,
+        isSample: false
+      });
+
+      titleInput.value = '';
+      dueInput.value = '';
+      saveState();
+      renderInbox();
+      updateBadges();
+      showToast(`Added to ${state.selectedCaptureClass}!`, 'ADDED');
+    }
+
+    function setInboxFilter(filterVal) {
+      state.inboxFilter = filterVal;
+      saveState();
+      renderInbox();
+    }
+
+    function toggleInboxDone(id) {
+      const task = state.inbox.find(t => t.id === id);
+      if (!task) return;
+      task.done = !task.done;
+      saveState();
+      renderInbox();
+      updateBadges();
+      if (task.done) {
+        triggerConfetti();
+        showToast('Stamped done!', 'DONE ✓');
+      }
+    }
+
+    function updateInboxField(id, field, value) {
+      const task = state.inbox.find(t => t.id === id);
+      if (task) {
+        task[field] = value;
+        saveState();
+      }
+    }
+
+    function deleteInboxTask(id) {
+      state.inbox = state.inbox.filter(t => t.id !== id);
+      saveState();
+      renderInbox();
+      updateBadges();
+    }
+
+    function clearSampleInbox() {
+      state.inbox = state.inbox.filter(t => !t.isSample);
+      saveState();
+      renderInbox();
+      updateBadges();
+      showToast('Sample tasks cleared!', 'CLEAN');
+    }
+
+    function renderInbox() {
+      // 1. Render Capture Class Chips
+      const chipsEl = document.getElementById('capture-class-chips');
+      chipsEl.innerHTML = USER_CLASSES_LIST.map(cls => {
+        const style = getClassStyle(cls);
+        const isSelected = state.selectedCaptureClass === cls;
+        return `
+          <button type="button" onclick="selectCaptureClass('${escapeHtml(cls)}')"
+            class="px-3 py-1.5 rounded-xl text-xs font-extrabold border-2 transition ${
+              isSelected ? style.chipActive + ' -translate-y-0.5' : style.chipIdle + ' hover:opacity-90'
+            }">
+            ${isSelected ? '● ' : ''}${escapeHtml(cls)}
+          </button>
+        `;
+      }).join('');
+
+      // 2. Render Filter Pills (All, Due Soon, and all 5 Classes)
+      const filtersEl = document.getElementById('inbox-filters');
+      const filterOptions = ['All', 'Due Soon', ...USER_CLASSES_LIST, 'Completed'];
+      filtersEl.innerHTML = filterOptions.map(f => {
+        const active = state.inboxFilter === f;
+        const cStyle = CLASS_STYLES[f];
+        let pillBg = active ? 'bg-ink text-white' : 'bg-white text-ink hover:bg-stone-100';
+        if (cStyle && !active) pillBg = `${cStyle.badgeClass} opacity-80 hover:opacity-100`;
+        if (cStyle && active) pillBg = `${cStyle.chipActive}`;
+
+        return `
+          <button onclick="setInboxFilter('${escapeHtml(f)}')"
+            class="px-3 py-1.5 rounded-xl text-xs font-extrabold border-2 border-ink transition ${pillBg}">
+            ${escapeHtml(f)}
+          </button>
+        `;
+      }).join('');
+
+      // 3. Filter Tasks
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const filtered = state.inbox.filter(task => {
+        if (state.inboxFilter === 'Completed') return task.done;
+        if (task.done) return false;
+        if (state.inboxFilter === 'All') return true;
+        if (state.inboxFilter === 'Due Soon') {
+          if (!task.dueDate) return false;
+          const due = new Date(task.dueDate + 'T00:00:00');
+          return Math.round((due - today) / (1000 * 60 * 60 * 24)) <= 2;
+        }
+        return task.className === state.inboxFilter;
+      });
+
+      document.getElementById('inbox-count-label').textContent = `${filtered.length} ${filtered.length === 1 ? 'TASK' : 'TASKS'}`;
+
+      const listEl = document.getElementById('inbox-list');
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="stationery-card rounded-2xl p-10 bg-white text-center space-y-1.5">
+            <h3 class="font-display font-extrabold text-lg text-ink">Nothing in this filter</h3>
+            <p class="text-xs font-medium text-stone-600">Pick a class sticker above to capture a new assignment.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(task => {
+        const cStyle = getClassStyle(task.className);
+        const prioBg = task.priority === 'Must' ? 'bg-rose-200' : task.priority === 'Quick Win' ? 'bg-purple-200' : 'bg-sky-200';
+
+        return `
+          <div class="stationery-card-sm rounded-2xl p-4 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
+            task.done ? 'opacity-65' : ''
+          }">
+            <div class="flex items-start gap-3.5 flex-1 min-w-0">
+              <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleInboxDone('${task.id}')"
+                class="mt-1 w-5 h-5 accent-ink cursor-pointer shrink-0" />
+
+              <div class="flex-1 min-w-0 space-y-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg border-2 ${cStyle.badgeClass}">
+                    ${escapeHtml(task.className || 'Class')}
+                  </span>
+                  <span class="font-mono text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border border-ink ${prioBg}">
+                    ${escapeHtml(task.priority || 'Should')}
+                  </span>
+                  ${getDueBadge(task.dueDate)}
+                </div>
+
+                <h4 class="font-display font-extrabold text-base text-ink ${task.done ? 'line-through text-stone-400' : ''}">
+                  ${escapeHtml(task.title)}
+                </h4>
+
+                <!-- Inline Editable Next Tiny Action -->
+                <div class="flex items-center gap-2 bg-cream px-2.5 py-1.5 rounded-xl border border-stone-300">
+                  <span class="font-mono text-[10px] font-extrabold text-stone-500 shrink-0">NEXT TINY STEP:</span>
+                  <input type="text" value="${escapeHtml(task.tinyStep)}"
+                    placeholder="Type a 2-minute starter step..."
+                    onchange="updateInboxField('${task.id}', 'tinyStep', this.value)"
+                    class="flex-1 bg-transparent text-xs font-semibold text-ink focus:outline-none" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Send to Today (#1 / #2 / #3) -->
+            <div class="flex flex-wrap items-center gap-1.5 pl-8 lg:pl-0 shrink-0">
+              <span class="font-mono text-[10px] font-extrabold text-stone-500 mr-1">SEND TO TODAY:</span>
+              <button onclick="assignInboxToSlot('${task.id}', 'must')"
+                class="px-2.5 py-1.5 rounded-xl text-xs font-display font-extrabold bg-rose-200 hover:bg-rose-300 border-2 border-ink text-ink transition">
+                #1 Must
+              </button>
+              <button onclick="assignInboxToSlot('${task.id}', 'should')"
+                class="px-2.5 py-1.5 rounded-xl text-xs font-display font-extrabold bg-sky-200 hover:bg-sky-300 border-2 border-ink text-ink transition">
+                #2 Should
+              </button>
+              <button onclick="assignInboxToSlot('${task.id}', 'quick')"
+                class="px-2.5 py-1.5 rounded-xl text-xs font-display font-extrabold bg-purple-200 hover:bg-purple-300 border-2 border-ink text-ink transition">
+                #3 Quick
+              </button>
+              <button onclick="deleteInboxTask('${task.id}')" title="Delete"
+                class="px-2 py-1.5 rounded-xl font-mono text-xs font-bold text-stone-400 hover:text-rose-600 transition">
+                ✕
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // THIS WEEK (7-DAY SPREAD + STICKY NOTE RESET)
+    // =========================================================================
+    function renderWeek() {
+      const days = [
+        { key: 'Mon', label: 'Monday', headerBg: 'bg-[#CCFBF1]' },
+        { key: 'Tue', label: 'Tuesday', headerBg: 'bg-[#FFEDD5]' },
+        { key: 'Wed', label: 'Wednesday', headerBg: 'bg-[#FEF9C3]' },
+        { key: 'Thu', label: 'Thursday', headerBg: 'bg-[#D1FAE5]' },
+        { key: 'Fri', label: 'Friday', headerBg: 'bg-[#FCE7F3]' },
+        { key: 'Sat', label: 'Saturday', headerBg: 'bg-sky-100' },
+        { key: 'Sun', label: 'Sunday', headerBg: 'bg-purple-100' }
+      ];
+
+      const todayShort = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+      const gridEl = document.getElementById('week-grid');
+
+      const dayCards = days.map(day => {
+        const entry = state.weekPlan[day.key] || { commitment: '', topTask: '', secondTask: '', startStop: '', notes: '' };
+        const isToday = todayShort === day.key;
+
+        return `
+          <div class="stationery-card rounded-2xl overflow-hidden bg-white flex flex-col justify-between">
+            <div class="${day.headerBg} px-4 py-2.5 border-b-2 border-ink flex items-center justify-between">
+              <h3 class="font-display font-extrabold text-base text-ink">${day.label}</h3>
+              ${isToday ? `<span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-ink text-white">TODAY</span>` : ''}
+            </div>
+
+            <div class="p-3.5 space-y-2.5 text-xs">
+              <div>
+                <label class="block font-mono text-[10px] font-extrabold uppercase text-stone-500 mb-0.5">FIXED / PRACTICE</label>
+                <input type="text" value="${escapeHtml(entry.commitment)}" placeholder="Sports, club, plans..."
+                  onchange="updateWeekDay('${day.key}', 'commitment', this.value)"
+                  class="w-full bg-cream px-2.5 py-1.5 rounded-lg border border-stone-300 focus:border-ink font-medium text-ink focus:outline-none" />
+              </div>
+
+              <div>
+                <label class="block font-mono text-[10px] font-extrabold uppercase text-rose-700 mb-0.5">TOP SCHOOL TASK</label>
+                <input type="text" value="${escapeHtml(entry.topTask)}" placeholder="Main anchor task..."
+                  onchange="updateWeekDay('${day.key}', 'topTask', this.value)"
+                  class="w-full bg-rose-50/70 px-2.5 py-1.5 rounded-lg border border-ink font-bold text-ink focus:outline-none" />
+              </div>
+
+              <div>
+                <label class="block font-mono text-[10px] font-extrabold uppercase text-sky-700 mb-0.5">SECOND TASK</label>
+                <input type="text" value="${escapeHtml(entry.secondTask || '')}" placeholder="Lighter follow-up..."
+                  onchange="updateWeekDay('${day.key}', 'secondTask', this.value)"
+                  class="w-full bg-sky-50/60 px-2.5 py-1.5 rounded-lg border border-stone-300 focus:border-ink font-semibold text-ink focus:outline-none" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-1.5 pt-0.5">
+                <div>
+                  <label class="block font-mono text-[9px] font-extrabold uppercase text-stone-500">START–STOP</label>
+                  <input type="text" value="${escapeHtml(entry.startStop)}" placeholder="7:00–9:00"
+                    onchange="updateWeekDay('${day.key}', 'startStop', this.value)"
+                    class="w-full bg-cream px-2 py-1 rounded border border-stone-300 font-mono text-[11px] font-bold text-ink focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block font-mono text-[9px] font-extrabold uppercase text-stone-500">NOTES</label>
+                  <input type="text" value="${escapeHtml(entry.notes || '')}" placeholder="Quick note..."
+                    onchange="updateWeekDay('${day.key}', 'notes', this.value)"
+                    class="w-full bg-cream px-2 py-1 rounded border border-stone-300 text-[11px] font-medium text-ink focus:outline-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 8th Card: Sticky Note 15-Minute Weekly Reset
+      const resetSticky = `
+        <div class="stationery-card rounded-2xl p-4 bg-[#FEF9C3] relative flex flex-col justify-between space-y-3">
+          <div class="washi-tape bg-emerald-300"></div>
+          <div>
+            <span class="font-mono text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-white border border-ink">
+              SUNDAY RITUAL
+            </span>
+            <h3 class="font-display font-extrabold text-lg text-ink mt-1.5">15-Min Weekly Reset</h3>
+            <p class="text-xs font-medium text-stone-700 mt-0.5">Quick prep so Monday morning doesn't ambush you.</p>
+          </div>
+
+          <div class="space-y-2">
+            ${state.weeklyResetChecklist.map(item => `
+              <label class="flex items-start gap-2.5 p-2.5 rounded-xl border-2 border-ink bg-white cursor-pointer text-xs ${
+                item.done ? 'line-through text-stone-400' : 'text-ink font-bold'
+              }">
+                <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleWeeklyResetItem('${item.id}')"
+                  class="mt-0.5 accent-ink cursor-pointer" />
+                <span>${escapeHtml(item.text)}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      gridEl.innerHTML = dayCards + resetSticky;
+    }
+
+    function updateWeekDay(dayKey, field, value) {
+      if (!state.weekPlan[dayKey]) state.weekPlan[dayKey] = {};
+      state.weekPlan[dayKey][field] = value;
+      saveState();
+    }
+
+    function toggleWeeklyResetItem(id) {
+      const item = state.weeklyResetChecklist.find(i => i.id === id);
+      if (item) {
+        item.done = !item.done;
+        saveState();
+        renderWeek();
+        if (item.done && state.weeklyResetChecklist.every(i => i.done)) {
+          triggerConfetti();
+          showToast('Weekly reset done! Ready for the week.', 'READY');
+        }
+      }
+    }
+
+    function resetWeeklyPlan() {
+      Object.keys(state.weekPlan).forEach(k => {
+        state.weekPlan[k] = { commitment: '', topTask: '', secondTask: '', startStop: '', notes: '' };
+      });
+      state.weeklyResetChecklist.forEach(i => i.done = false);
+      saveState();
+      renderWeek();
+      showToast('Week spread cleared.', 'CLEARED');
+    }
+
+    // =========================================================================
+    // MY CLASSES & FOCUS LOG RENDERING
+    // =========================================================================
+    let selectedLogTag = '10-min timer';
+
+    function selectLogTag(btnEl, tagText) {
+      selectedLogTag = tagText;
+      document.querySelectorAll('.log-tag-btn').forEach(b => {
+        b.className = 'log-tag-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white border-2 border-ink text-ink';
+      });
+      btnEl.className = 'log-tag-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-200 border-2 border-ink text-ink';
+    }
+
+    function addFocusLogEntry(e) {
+      e.preventDefault();
+      const noteInput = document.getElementById('focus-log-note');
+      const note = noteInput.value.trim();
+
+      state.focusLogs.unshift({
+        id: 'fl-' + Date.now(),
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        tag: selectedLogTag,
+        note: note || `Used "${selectedLogTag}" to get started.`
+      });
+
+      noteInput.value = '';
+      saveState();
+      renderGuide();
+      showToast('Logged what helped you focus!', 'SAVED');
+    }
+
+    function addNewClassCard() {
+      state.classes.push({
+        id: 'c-' + Date.now(),
+        name: 'New Class',
+        teacher: 'Teacher / Room #',
+        platform: 'Canvas / Google Classroom',
+        pattern: 'Usual homework pattern...',
+        helpWhere: 'Extra help / study buddy'
+      });
+      saveState();
+      renderGuide();
+    }
+
+    function updateClassField(id, field, value) {
+      const cls = state.classes.find(c => c.id === id);
+      if (cls) {
+        cls[field] = value;
+        saveState();
+      }
+    }
+
+    function deleteClassCard(id) {
+      state.classes = state.classes.filter(c => c.id !== id);
+      saveState();
+      renderGuide();
+    }
+
+    function renderGuide() {
+      const classesEl = document.getElementById('classes-list');
+      classesEl.innerHTML = state.classes.map(cls => {
+        const cStyle = getClassStyle(cls.name);
+        return `
+          <div class="stationery-card-sm rounded-2xl overflow-hidden bg-white relative group">
+            <!-- Colored Class Header Band -->
+            <div style="background-color: ${cStyle.bg};" class="px-4 py-2.5 border-b-2 border-ink flex items-center justify-between gap-2">
+              <input type="text" value="${escapeHtml(cls.name)}" onchange="updateClassField('${cls.id}', 'name', this.value)"
+                class="font-display font-extrabold text-base text-ink bg-transparent focus:bg-white/80 px-1.5 py-0.5 -ml-1.5 rounded w-full focus:outline-none" />
+              <button onclick="deleteClassCard('${cls.id}')" title="Remove class"
+                class="font-mono text-xs font-bold text-ink/50 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition">
+                ✕
+              </button>
+            </div>
+
+            <div class="p-3.5 space-y-2 text-xs">
+              <div>
+                <span class="font-mono text-[10px] font-extrabold text-stone-400">TEACHER / ROOM:</span>
+                <input type="text" value="${escapeHtml(cls.teacher)}" onchange="updateClassField('${cls.id}', 'teacher', this.value)"
+                  class="w-full font-bold text-ink bg-transparent focus:bg-cream px-1.5 py-0.5 rounded focus:outline-none" />
+              </div>
+              <div>
+                <span class="font-mono text-[10px] font-extrabold text-stone-400">PLATFORM / MATERIALS:</span>
+                <input type="text" value="${escapeHtml(cls.platform)}" onchange="updateClassField('${cls.id}', 'platform', this.value)"
+                  class="w-full font-semibold text-stone-700 bg-transparent focus:bg-cream px-1.5 py-0.5 rounded focus:outline-none" />
+              </div>
+              <div>
+                <span class="font-mono text-[10px] font-extrabold text-stone-400">USUAL HW PATTERN:</span>
+                <input type="text" value="${escapeHtml(cls.pattern)}" onchange="updateClassField('${cls.id}', 'pattern', this.value)"
+                  class="w-full font-medium text-stone-700 bg-transparent focus:bg-cream px-1.5 py-0.5 rounded focus:outline-none" />
+              </div>
+              <div>
+                <span class="font-mono text-[10px] font-extrabold text-stone-400">WHERE TO GET HELP:</span>
+                <input type="text" value="${escapeHtml(cls.helpWhere)}" onchange="updateClassField('${cls.id}', 'helpWhere', this.value)"
+                  class="w-full font-medium text-stone-600 bg-transparent focus:bg-cream px-1.5 py-0.5 rounded focus:outline-none" />
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const logEl = document.getElementById('focus-log-list');
+      logEl.innerHTML = state.focusLogs.map(entry => `
+        <div class="stationery-card-sm rounded-xl p-3.5 bg-white space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-200 border border-ink text-ink">${escapeHtml(entry.tag)}</span>
+            <span class="font-mono text-[10px] font-bold text-stone-500">${escapeHtml(entry.date)}</span>
+          </div>
+          <p class="text-xs font-semibold text-ink leading-relaxed pt-1">${escapeHtml(entry.note)}</p>
+        </div>
+      `).join('');
+    }
+
+    function resetAllToDefaults() {
+      localStorage.removeItem(STORAGE_KEY);
+      state = getDefaultState();
+      saveState();
+      renderAll();
+      showToast('Restored default desk with your 5 classes!', 'RESET');
+    }
+
+    // =========================================================================
+    // MASTER RENDER
+    // =========================================================================
+    function updateBadges() {
+      const openCount = state.inbox.filter(t => !t.done).length;
+      document.getElementById('inbox-badge').textContent = openCount;
+      document.getElementById('mobile-inbox-badge').textContent = openCount;
+    }
+
+    function renderAll() {
+      updateBadges();
+      updateTimerDropdownOptions();
+      renderTodayHeader();
+      renderTopThree();
+      renderInbox();
+      renderWeek();
+      renderGuide();
+      renderTimerDisplay();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      switchTab(state.activeTab || 'today');
+    });
+  </script>
+</body>
+</html>
